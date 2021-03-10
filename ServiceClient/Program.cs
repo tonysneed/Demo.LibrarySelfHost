@@ -1,0 +1,48 @@
+﻿using System;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace ServiceClient
+{
+    class Program
+    {
+        static async Task Main(string[] args)
+        {
+            // Create http client
+            var client = new HttpClient
+            {
+                BaseAddress = new Uri("http://localhost:5000/greeting/"),
+            };
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+
+            // Get name from the user
+            string name = GetNameFromUser();
+
+            while (name?.Length > 0)
+            {
+                // Set greeting
+                var content = new StringContent(JsonSerializer.Serialize($"Hello {name}"), Encoding.UTF8, "application/json");
+                var postResponse = await client.PostAsync("", content);
+                postResponse.EnsureSuccessStatusCode();
+
+                // Get greeting
+                var getResponse = client.GetAsync("").Result;
+                getResponse.EnsureSuccessStatusCode();
+                var greeting = getResponse.Content.ReadAsStringAsync().Result;
+                Console.WriteLine($"Greeting: {greeting}");
+
+                // Get name again
+                Console.WriteLine();
+                name = GetNameFromUser();
+            }
+        }
+
+        private static string GetNameFromUser()
+        {
+            Console.WriteLine("Enter a name:");
+            return Console.ReadLine();
+        }
+    }
+}
